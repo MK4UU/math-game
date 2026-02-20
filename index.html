@@ -3,169 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>חשבון בקליק - הכל באחד! ⚡</title>
+    <title>חשבון הגיבורים ⚡</title>
     <style>
         :root {
             --plus: #4CAF50; --minus: #FF9800; --mult: #9C27B0;
-            --bg: #F0F4C3; --text: #263238;
+            --bg: #f0f9ff; --text: #2c3e50;
         }
 
         body {
-            font-family: 'Arial', sans-serif; background-color: var(--bg);
+            font-family: 'Assistant', 'Segoe UI', sans-serif; background-color: var(--bg);
             margin: 0; display: flex; flex-direction: column; align-items: center;
-            height: 100vh; overflow: hidden; color: var(--text);
+            height: 100vh; overflow: hidden;
         }
 
-        .header {
-            width: 100%; background: white; padding: 10px 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); box-sizing: border-box;
+        /* מסכי האפליקציה */
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; }
+        .active { display: flex; }
+
+        /* כותרת עליונה */
+        .status-bar {
+            width: 100%; background: white; padding: 10px; display: flex; 
+            justify-content: space-around; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .stars-count { color: #FFD600; font-size: 1.5rem; font-weight: bold; text-shadow: 1px 1px 1px #000; }
+        /* דמויות */
+        .avatar-choice { font-size: 5rem; cursor: pointer; transition: 0.3s; padding: 20px; border-radius: 20px; }
+        .avatar-choice:hover { background: #e0e0e0; transform: scale(1.1); }
+        .character-img { font-size: 6rem; margin: 10px; transition: 0.5s; }
 
-        /* מסך בחירה */
-        #menu-screen {
-            display: flex; flex-direction: column; justify-content: center; gap: 20px;
-            height: 100%; width: 90%;
+        /* כפתורי תפריט */
+        .btn {
+            padding: 20px 40px; font-size: 1.5rem; border: none; border-radius: 50px;
+            color: white; font-weight: bold; cursor: pointer; margin: 10px;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.2); width: 80%;
         }
 
-        .menu-btn {
-            padding: 25px; font-size: 1.8rem; border: none; border-radius: 20px;
-            color: white; font-weight: bold; cursor: pointer;
-            box-shadow: 0 8px 0 rgba(0,0,0,0.2); transition: 0.1s;
+        /* עיצוב שלבים וניקוד */
+        .progress-container { width: 80%; background: #ddd; border-radius: 20px; height: 20px; margin: 10px 0; }
+        .progress-bar { width: 0%; height: 100%; background: #FFD600; border-radius: 20px; transition: 0.5s; }
+
+        /* מקלדת */
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 90%; max-width: 320px; }
+        .key { padding: 15px; font-size: 1.5rem; border: none; border-radius: 12px; background: white; box-shadow: 0 4px 0 #bbb; }
+        .key:active { transform: translateY(2px); box-shadow: 0 2px 0 #bbb; }
+
+        /* בועת דיבור */
+        .bubble {
+            background: white; border-radius: 20px; padding: 10px 20px;
+            position: relative; margin-bottom: 10px; border: 3px solid #333;
+            display: none; font-weight: bold;
         }
 
-        .btn-plus { background: var(--plus); }
-        .btn-minus { background: var(--minus); }
-        .btn-mult { background: var(--mult); }
-
-        /* מסך משחק */
-        #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; flex: 1; }
-
-        .question-box {
-            font-size: 4rem; margin: 20px 0; background: white;
-            padding: 20px 50px; border-radius: 30px; box-shadow: 0 10px 0 #cfd8dc;
-        }
-
-        .answer-display { font-size: 3rem; height: 70px; color: #546E7A; font-weight: bold; }
-
-        .keypad {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-            width: 90%; max-width: 360px; padding-bottom: 20px;
-        }
-
-        .key {
-            padding: 15px; font-size: 1.8rem; border: none; border-radius: 15px;
-            background: white; box-shadow: 0 5px 0 #bbb; cursor: pointer;
-        }
-
-        .key:active { transform: translateY(4px); box-shadow: 0 1px 0 #bbb; }
-        .key.action { background: #FFCDD2; }
-        .key.submit { background: #81C784; color: white; box-shadow: 0 5px 0 #2E7D32; }
-
-        .back-btn { margin-top: 10px; background: none; border: 2px solid #546E7A; padding: 5px 15px; border-radius: 10px; }
+        .level-badge { background: #e74c3c; color: white; padding: 5px 15px; border-radius: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <button class="back-btn" onclick="showMenu()">🏠 תפריט</button>
-        <div class="stars-count">⭐ <span id="star-count">0</span></div>
+    <div id="char-screen" class="screen active">
+        <h1>מי הגיבור/ה שלך?</h1>
+        <div style="display: flex;">
+            <div class="avatar-choice" onclick="selectChar('👦')">👦<br><small style="font-size: 1rem;">בן</small></div>
+            <div class="avatar-choice" onclick="selectChar('👧')">👧<br><small style="font-size: 1rem;">בת</small></div>
+        </div>
     </div>
 
-    <div id="menu-screen">
-        <h1 style="text-align:center">מה נלמד היום?</h1>
-        <button class="menu-btn btn-plus" onclick="startGame('plus')">➕ חיבור</button>
-        <button class="menu-btn btn-minus" onclick="startGame('minus')">➖ חיסור</button>
-        <button class="menu-btn btn-mult" onclick="startGame('mult')">✖️ כפל</button>
+    <div id="menu-screen" class="screen">
+        <h2 id="welcome-msg">היי גיבור!</h2>
+        <button class="btn" style="background:var(--plus)" onclick="startLevel('plus')">➕ חיבור</button>
+        <button class="btn" style="background:var(--minus)" onclick="startLevel('minus')">➖ חיסור</button>
+        <button class="btn" style="background:var(--mult)" onclick="startLevel('mult')">✖️ כפל</button>
     </div>
 
-    <div id="game-screen">
-        <div class="question-box" id="question">?</div>
-        <div class="answer-display" id="answer-display">?</div>
+    <div id="game-screen" class="screen">
+        <div class="status-bar">
+            <div class="level-badge">שלב <span id="level-num">1</span></div>
+            <div id="score-display">⭐ 0</div>
+            <button onclick="goToMenu()">🏠</button>
+        </div>
+
+        <div class="progress-container"><div id="progress" class="progress-bar"></div></div>
+
+        <div id="bubble" class="bubble">כל הכבוד! 🚀</div>
+        <div id="player-char" class="character-img">👦</div>
+
+        <div style="font-size: 3.5rem; font-weight: bold;" id="question">5 + 5</div>
+        <div style="font-size: 2.5rem; color: #7f8c8d; margin-bottom: 10px;" id="answer-view">?</div>
 
         <div class="keypad">
-            <button class="key" onclick="addNum(1)">1</button>
-            <button class="key" onclick="addNum(2)">2</button>
-            <button class="key" onclick="addNum(3)">3</button>
-            <button class="key" onclick="addNum(4)">4</button>
-            <button class="key" onclick="addNum(5)">5</button>
-            <button class="key" onclick="addNum(6)">6</button>
-            <button class="key" onclick="addNum(7)">7</button>
-            <button class="key" onclick="addNum(8)">8</button>
-            <button class="key" onclick="addNum(9)">9</button>
-            <button class="key action" onclick="clearAns()">❌</button>
-            <button class="key" onclick="addNum(0)">0</button>
-            <button class="key submit" onclick="checkAnswer()">✅</button>
+            <button class="key" onclick="press(1)">1</button><button class="key" onclick="press(2)">2</button><button class="key" onclick="press(3)">3</button>
+            <button class="key" onclick="press(4)">4</button><button class="key" onclick="press(5)">5</button><button class="key" onclick="press(6)">6</button>
+            <button class="key" onclick="press(7)">7</button><button class="key" onclick="press(8)">8</button><button class="key" onclick="press(9)">9</button>
+            <button class="key" style="background:#ffcdd2" onclick="clearAns()">❌</button>
+            <button class="key" onclick="press(0)">0</button>
+            <button class="key" style="background:#c8e6c9" onclick="check()">✅</button>
         </div>
     </div>
 
     <script>
-        let currentMode = '';
-        let n1, n2, correctAnswer;
-        let currentInput = "";
-        let stars = 0;
+        let char = '';
+        let score = 0;
+        let level = 1;
+        let mode = '';
+        let ans = 0;
+        let input = "";
+        const funnyMsgs = ["וואו! אתה תותח!", "איזו מהירות! ⚡", "פשוט גאון! 🧠", "אין עליך בעולם!", "ישר לחלל! 🚀"];
 
-        function showMenu() {
-            document.getElementById('menu-screen').style.display = 'flex';
-            document.getElementById('game-screen').style.display = 'none';
+        function selectChar(c) {
+            char = c;
+            document.getElementById('player-char').innerText = char;
+            document.getElementById('welcome-msg').innerText = "מוכנים לשחק, " + (char === '👦' ? "גיבור?" : "גיבורה?");
+            showScreen('menu-screen');
         }
 
-        function startGame(mode) {
-            currentMode = mode;
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('game-screen').style.display = 'flex';
-            generateQuestion();
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
 
-        function generateQuestion() {
-            currentInput = "";
-            document.getElementById('answer-display').innerText = "?";
-            document.getElementById('answer-display').style.color = "#546E7A";
+        function goToMenu() { showScreen('menu-screen'); }
 
-            if (currentMode === 'plus') {
-                n1 = Math.floor(Math.random() * 20) + 1;
-                n2 = Math.floor(Math.random() * 20) + 1;
-                correctAnswer = n1 + n2;
-                document.getElementById('question').innerText = `${n1} + ${n2}`;
-            } else if (currentMode === 'minus') {
-                n1 = Math.floor(Math.random() * 20) + 10;
+        function startLevel(m) {
+            mode = m;
+            score = 0;
+            level = 1;
+            updateUI();
+            newQ();
+            showScreen('game-screen');
+        }
+
+        function newQ() {
+            input = "";
+            document.getElementById('answer-view').innerText = "?";
+            document.getElementById('bubble').style.display = 'none';
+            
+            let max = 5 + (level * 5); // רמת הקושי עולה עם השלב
+            let n1 = Math.floor(Math.random() * max) + 1;
+            let n2 = Math.floor(Math.random() * max) + 1;
+
+            if (mode === 'plus') { ans = n1 + n2; document.getElementById('question').innerText = n1 + " + " + n2; }
+            if (mode === 'minus') { 
+                if(n1 < n2) [n1, n2] = [n2, n1];
+                ans = n1 - n2; document.getElementById('question').innerText = n1 + " - " + n2; 
+            }
+            if (mode === 'mult') {
+                n1 = Math.floor(Math.random() * (level + 2)) + 1;
                 n2 = Math.floor(Math.random() * 10) + 1;
-                correctAnswer = n1 - n2;
-                document.getElementById('question').innerText = `${n1} - ${n2}`;
-            } else if (currentMode === 'mult') {
-                n1 = Math.floor(Math.random() * 10) + 1;
-                n2 = Math.floor(Math.random() * 10) + 1;
-                correctAnswer = n1 * n2;
-                document.getElementById('question').innerText = `${n1} × ${n2}`;
+                ans = n1 * n2; document.getElementById('question').innerText = n1 + " × " + n2;
             }
         }
 
-        function addNum(num) {
-            if (currentInput.length < 3) {
-                currentInput += num;
-                document.getElementById('answer-display').innerText = currentInput;
-            }
-        }
+        function press(n) { if(input.length < 3) { input += n; document.getElementById('answer-view').innerText = input; } }
+        function clearAns() { input = ""; document.getElementById('answer-view').innerText = "?"; }
 
-        function clearAns() {
-            currentInput = "";
-            document.getElementById('answer-display').innerText = "?";
-        }
-
-        function checkAnswer() {
-            if (parseInt(currentInput) === correctAnswer) {
-                stars += 10;
-                document.getElementById('star-count').innerText = stars;
-                document.getElementById('answer-display').innerText = "אלופה! 🏆";
-                document.getElementById('answer-display').style.color = "green";
-                setTimeout(generateQuestion, 1200);
+        function check() {
+            if (parseInt(input) === ans) {
+                score += 20;
+                if (score >= 100) { level++; score = 0; alert("כל הכבוד! עלית לשלב " + level); }
+                
+                let b = document.getElementById('bubble');
+                b.innerText = funnyMsgs[Math.floor(Math.random() * funnyMsgs.length)];
+                b.style.display = 'block';
+                
+                updateUI();
+                setTimeout(newQ, 1500);
             } else {
-                document.getElementById('answer-display').innerText = "טעות.. נסה שוב";
-                document.getElementById('answer-display').style.color = "red";
-                setTimeout(clearAns, 800);
+                document.getElementById('answer-view').innerText = "טעות.. נסה שוב!";
+                setTimeout(clearAns, 1000);
             }
+        }
+
+        function updateUI() {
+            document.getElementById('score-display').innerText = "⭐ " + (score + (level-1)*100);
+            document.getElementById('level-num').innerText = level;
+            document.getElementById('progress').style.width = score + "%";
         }
     </script>
 </body>
