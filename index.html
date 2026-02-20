@@ -3,151 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מֵרוֹץ הָאַרְנָב לְ-100 🐰</title>
+    <title>מֵרוֹץ הַחֲבֵרִים לְ-100 🏁</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --wood: #8D6E63; --leaf: #66BB6A; --sky: #E3F2FD; --path: #D7CCC8; }
+        :root { --wood: #8D6E63; --grass: #7CB342; --sky: #A7E6FF; }
         body { 
             font-family: 'Assistant', sans-serif; margin: 0; padding: 0;
-            background: linear-gradient(to bottom, var(--sky) 50%, var(--leaf) 50%);
+            background: linear-gradient(to bottom, var(--sky) 40%, var(--grass) 40%);
             height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden;
         }
 
-        /* לוח התרגיל */
-        .board {
-            background: #FFF9C4; border: 6px solid var(--wood); padding: 15px 30px;
-            border-radius: 20px; font-size: 2.5rem; font-weight: 800; color: #5D4037;
-            margin-top: 20px; box-shadow: 0 8px 0 rgba(0,0,0,0.1); z-index: 5;
-        }
-
-        /* מסלול ההתקדמות */
-        .track-container {
-            position: absolute; bottom: 100px; width: 90%; height: 60px;
-            background: rgba(0,0,0,0.05); border-radius: 30px; display: flex; align-items: center; padding: 0 10px;
-        }
-        .finish-line { position: absolute; right: 0; font-size: 2rem; }
-        .start-line { position: absolute; left: 0; font-size: 1.2rem; font-weight: bold; color: var(--wood); }
-
-        /* הארנב */
-        #rabbit { 
-            font-size: 3.5rem; position: absolute; bottom: 110px; left: 0;
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
-        }
-
-        .answers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
-        .ans-card {
-            background: white; border: 4px solid var(--wood); width: 100px; height: 60px;
-            border-radius: 15px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 var(--wood);
-        }
-        .ans-card:active { transform: translateY(3px); box-shadow: none; }
-
-        .progress-text { position: absolute; bottom: 40px; font-weight: 800; color: white; font-size: 1.5rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
         .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; }
         .active { display: flex; }
+
+        /* מַסְלוּל הַמֵּרוֹץ */
+        .race-track {
+            position: relative; width: 95%; height: 380px; background: rgba(255,255,255,0.15);
+            border-radius: 20px; margin-top: 15px; border: 4px solid var(--wood); overflow: hidden;
+        }
+        .lane { position: relative; height: 33.3%; border-bottom: 2px dashed rgba(255,255,255,0.4); width: 100%; display: flex; align-items: center; }
+
+        /* שְׁלָטִים */
+        .milestone {
+            position: absolute; bottom: 5px; transform: translateX(50%);
+            display: flex; flex-direction: column; align-items: center; z-index: 1;
+        }
+        .sign-post { background: #D7CCC8; border: 2px solid var(--wood); font-size: 0.9rem; font-weight: bold; padding: 2px 5px; border-radius: 4px; }
+        .stick { width: 4px; height: 12px; background: var(--wood); }
+
+        /* דְּמוּיוֹת */
+        .runner { 
+            position: absolute; font-size: 3rem; transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+            display: flex; flex-direction: column; align-items: center; z-index: 10;
+        }
+        .runner-name { font-size: 0.9rem; background: white; padding: 1px 6px; border-radius: 8px; border: 2px solid var(--wood); margin-bottom: -5px; font-weight: bold; white-space: nowrap;}
+        .running-anim { animation: run-bounce 0.4s infinite; }
+        @keyframes run-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px) rotate(5deg); } }
+
+        /* לוּחַ שְׁאֵלָה */
+        .question-box {
+            background: #FFF9C4; border: 5px solid var(--wood); padding: 15px 35px;
+            border-radius: 25px; font-size: 2.2rem; font-weight: 800; margin-top: 10px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        }
+        .turn-info { font-size: 1.4rem; font-weight: bold; color: #E64A19; margin-bottom: 5px; background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 15px; }
+
+        .ans-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; }
+        .ans-btn { background: white; border: 3px solid var(--wood); padding: 12px 25px; border-radius: 15px; font-size: 1.6rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 var(--wood); transition: 0.1s; }
+        .ans-btn:active { transform: translateY(2px); box-shadow: none; }
+        
+        .funny-feedback { color: #D32F2F; font-weight: bold; height: 35px; margin-top: 5px; font-size: 1.3rem; text-shadow: 1px 1px 0px white; }
     </style>
 </head>
 <body>
 
-    <audio id="bg-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
-    <audio id="clap" src="https://www.soundjay.com/human/applause-01.mp3"></audio>
-    <audio id="fail" src="https://www.myinstants.com/media/sounds/clown-laugh.mp3"></audio>
+    <audio id="s-clap" src="https://www.soundjay.com/human/applause-01.mp3"></audio>
+    <audio id="s-fail" src="https://www.myinstants.com/media/sounds/clown-laugh.mp3"></audio>
 
-    <div id="name-screen" class="screen active">
-        <h1 style="color: #388E3C; font-size: 2.5rem;">מֵרוֹץ הָאַרְנָב לְ-100! 🏁</h1>
-        <input type="text" id="user-name" placeholder="אֵיךְ קוֹרְאִים לְךָ?" style="padding:15px; font-size:1.5rem; border-radius:15px; border:3px solid var(--wood); text-align:center;">
-        <button onclick="startApp()" style="margin-top:20px; padding:15px 40px; font-size:1.5rem; background:#FF7043; color:white; border:none; border-radius:50px; cursor:pointer; font-weight:bold;">לַמֵּרוֹץ! 🥕</button>
+    <div id="setup-screen" class="screen active">
+        <h1 style="color: #1B5E20; text-shadow: 2px 2px white;">🏎️ מֵרוֹץ הַחֲבֵרִים הַגָּדוֹל! 🏎️</h1>
+        <div style="background: white; padding: 25px; border-radius: 25px; border: 5px solid var(--wood); box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+            <p style="font-size: 1.2rem; font-weight: bold;">הַכְנִיסוּ שְׁמוֹת שַׂחְקָנִים:</p>
+            <input type="text" id="p1-name" placeholder="שַׂחְקָן 1" value="אַרְנָב"> <br><br>
+            <input type="text" id="p2-name" placeholder="שַׂחְקָן 2" value="חָתוּל"> <br><br>
+            <input type="text" id="p3-name" placeholder="שַׂחְקָן 3" value="כֶּלֶב">
+        </div>
+        <button onclick="startRace()" style="margin-top:25px; padding:18px 60px; background:#FF7043; color:white; border-radius:50px; border:none; font-size:1.8rem; cursor:pointer; font-weight:bold; box-shadow: 0 6px 0 #D84315;">לַמְּקוֹמוֹת... צֵא! 🚀</button>
     </div>
 
-    <div id="game-screen" class="screen">
-        <div class="board" id="q-text"> טּוֹעֵן... </div>
-        <div class="answers" id="options"></div>
+    <div id="race-screen" class="screen">
+        <div id="turn-display" class="turn-info"></div>
+        <div class="question-box" id="q-text">?</div>
+        <div id="funny-msg" class="funny-feedback"></div>
+        <div class="ans-grid" id="ans-grid"></div>
 
-        <div id="rabbit">🐰</div>
-        <div class="track-container">
-            <div class="start-line">0</div>
-            <div class="finish-line">🚩 100</div>
+        <div class="race-track" id="track">
+            <div id="milestones-container"></div>
+            
+            <div class="lane">
+                <div id="runner-0" class="runner"><span class="runner-name" id="n-0"></span><span>🐰</span></div>
+            </div>
+            <div class="lane">
+                <div id="runner-1" class="runner"><span class="runner-name" id="n-1"></span><span>🐱</span></div>
+            </div>
+            <div class="lane">
+                <div id="runner-2" class="runner"><span class="runner-name" id="n-2"></span><span>🐶</span></div>
+            </div>
         </div>
-        
-        <div class="progress-text">הָאַרְנָב בְּמֶרְחָק: <span id="pos-display">0</span> מתוך 100</div>
+        <div style="margin-top:10px; font-weight:bold; color:white; font-size:1.2rem;">נִקּוּד: <span id="score-val">0</span> מִתּוֹךְ 100</div>
     </div>
 
     <script>
-        let userName = "";
-        let rabbitPos = 0; // המיקום של הארנב (0 עד 100)
+        let players = [
+            { id: 0, name: "", pos: 0, emoji: "🐰" },
+            { id: 1, name: "", pos: 0, emoji: "🐱" },
+            { id: 2, name: "", pos: 0, emoji: "🐶" }
+        ];
+        let turn = 0;
         let correctAns = 0;
 
-        function startApp() {
-            userName = document.getElementById('user-name').value;
-            if(!userName) return;
-            document.getElementById('name-screen').classList.remove('active');
-            document.getElementById('game-screen').classList.add('active');
-            document.getElementById('bg-music').volume = 0.1;
-            document.getElementById('bg-music').play().catch(() => {});
-            newRound();
+        const insults = [
+            "אוֹי וַאֲבוֹי! הַמֹּחַ שֶׁלְּךָ יָצָא לְהַפְסָקָה? 🌭",
+            "לֹא נָכוֹן! אֲפִילוּ הַצָּב עָקַף אוֹתְךָ... 🐢",
+            "פָּסְפַסְתָּ! אוּלַי תְּנַסֶּה לִסְפֹּר עִם הָאָזְנַיִם? 👂",
+            "חָחָחָ! הַלֵּיצָן חוֹשֵׁב שֶׁאַתָּה מַצְחִיק! 🤡",
+            "טָעוּת! הַאִם שָׁכַחְתָּ אֵיךְ מְחַשְּׁבִים? 🧐"
+        ];
+
+        // יצירת שלטים
+        const mContainer = document.getElementById('milestones-container');
+        for(let i=10; i<=90; i+=10) {
+            let m = document.createElement('div');
+            m.className = 'milestone';
+            m.style.left = i + '%';
+            m.innerHTML = `<div class="sign-post">${i}</div><div class="stick"></div>`;
+            mContainer.appendChild(m);
         }
 
-        function newRound() {
-            // קביעת רמת קושי לפי המיקום (כל 20 צעדים הקושי עולה)
-            let difficulty = Math.floor(rabbitPos / 20) + 1; 
-            let range = 5 + (difficulty * 5); // מתחיל ב-10 וגדל עד 30+
-            
-            let isPlus = Math.random() > 0.5;
-            let a = Math.floor(Math.random() * range) + 2;
-            let b = Math.floor(Math.random() * range) + 2;
+        function startRace() {
+            players[0].name = document.getElementById('p1-name').value || "שַׂחְקָן 1";
+            players[1].name = document.getElementById('p2-name').value || "שַׂחְקָן 2";
+            players[2].name = document.getElementById('p3-name').value || "שַׂחְקָן 3";
 
-            if (isPlus) {
+            players.forEach(p => document.getElementById(`n-${p.id}`).innerText = p.name);
+            document.getElementById('setup-screen').classList.remove('active');
+            document.getElementById('race-screen').classList.add('active');
+            
+            updateUI();
+            nextTurn();
+        }
+
+        function nextTurn() {
+            document.getElementById('funny-msg').innerText = "";
+            let p = players[turn];
+            document.getElementById('turn-display').innerText = `תּוֹר שֶׁל: ${p.name} ${p.emoji}`;
+            
+            // קושי דינמי
+            let level = 10 + Math.floor(p.pos / 3);
+            let a = Math.floor(Math.random() * level) + 1;
+            let b = Math.floor(Math.random() * level) + 1;
+            let op = Math.random() > 0.5 ? '+' : '-';
+
+            if(op === '+') {
                 correctAns = a + b;
                 document.getElementById('q-text').innerText = `${a} + ${b} = ?`;
             } else {
-                if (a < b) [a, b] = [b, a];
+                if(a < b) [a, b] = [b, a];
                 correctAns = a - b;
                 document.getElementById('q-text').innerText = `${a} - ${b} = ?`;
             }
 
-            let opts = [correctAns];
-            while(opts.length < 4) {
-                let r = Math.floor(Math.random() * (range * 2)) + 1;
-                if(!opts.includes(r)) opts.push(r);
+            let options = [correctAns];
+            while(options.length < 4) {
+                let r = correctAns + Math.floor(Math.random() * 10) - 5;
+                if(r >= 0 && !options.includes(r)) options.push(r);
             }
-            opts.sort((x, y) => x - y);
-            document.getElementById('options').innerHTML = opts.map(o => `<div class="ans-card" onclick="check(${o})">${o}</div>`).join('');
+            options.sort((x, y) => x - y);
+            document.getElementById('ans-grid').innerHTML = options.map(o => 
+                `<button class="ans-btn" onclick="checkAns(${o})">${o}</button>`).join('');
         }
 
-        function updateRabbitUI() {
-            const rabbit = document.getElementById('rabbit');
-            const posDisplay = document.getElementById('pos-display');
-            
-            // חישוב אחוז ההתקדמות על המסך
-            let percentage = Math.min(rabbitPos, 100);
-            rabbit.style.left = `calc(${percentage}% - 50px)`;
-            posDisplay.innerText = rabbitPos;
-
-            if (rabbitPos >= 100) {
-                confetti({ particleCount: 200, spread: 100 });
-                document.getElementById('q-text').innerText = "כָּל הַכָּבוֹד! נִצַּחְתָּ!";
-                document.getElementById('options').innerHTML = `<button onclick="location.reload()" style="padding:10px 20px; border-radius:20px; background:var(--leaf); color:white; border:none; font-weight:bold;">מִשְׂחָק חָדָשׁ</button>`;
-            }
-        }
-
-        function check(val) {
-            if (val === correctAns) {
-                rabbitPos += 5; // מתקדם 5 צעדים בכל תשובה נכונה
-                document.getElementById('clap').play();
-                confetti({ particleCount: 50, spread: 30, origin: { y: 0.8 } });
-                updateRabbitUI();
-                if (rabbitPos < 100) setTimeout(newRound, 1200);
+        function checkAns(val) {
+            let p = players[turn];
+            if(val === correctAns) {
+                document.getElementById('s-clap').play();
+                p.pos += 4; // התקדמות של 4% (שווה לנקודה אחת במונחי משחק)
+                // דחיפה קלה אחורה לאחרים
+                players.forEach(other => { if(other.id !== turn) other.pos = Math.max(0, other.pos - 1); });
+                confetti({ particleCount: 40, spread: 40, origin: { x: p.pos/100, y: 0.8 } });
             } else {
-                rabbitPos = Math.max(0, rabbitPos - 3); // טעות מחזירה 3 צעדים אחורה
-                document.getElementById('fail').play();
-                document.getElementById('q-text').style.color = "red";
-                updateRabbitUI();
-                setTimeout(() => {
-                    document.getElementById('q-text').style.color = "#5D4037";
-                    newRound();
-                }, 1000);
+                document.getElementById('s-fail').play();
+                p.pos = Math.max(0, p.pos - 3);
+                document.getElementById('funny-msg').innerText = insults[Math.floor(Math.random() * insults.length)];
             }
+
+            updateUI();
+
+            if(p.pos >= 100) {
+                setTimeout(() => {
+                    alert(`🎊 ${p.name} נִצַּח/ה בַּמֵּרוֹץ! כָּל הַכָּבוֹד! 🎊`);
+                    location.reload();
+                }, 800);
+            } else {
+                turn = (turn + 1) % 3;
+                setTimeout(nextTurn, 1600);
+            }
+        }
+
+        function updateUI() {
+            players.forEach(p => {
+                let el = document.getElementById(`runner-${p.id}`);
+                el.style.left = `calc(${p.pos}% - 30px)`;
+                // אנימציה רק בזמן תנועה
+                el.classList.add('running-anim');
+                setTimeout(() => el.classList.remove('running-anim'), 800);
+            });
+            document.getElementById('score-val').innerText = players[turn].pos;
         }
     </script>
 </body>
