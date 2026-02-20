@@ -13,18 +13,15 @@
             background: linear-gradient(to bottom, var(--bg-sky) 60%, #B2FF59 60%);
             height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden;
         }
-
         .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; }
         .active { display: flex; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         .story-card {
             background: white; width: 85%; max-width: 600px; padding: 35px;
             border-radius: 40px; box-shadow: 0 15px 0px rgba(0,0,0,0.1);
             font-size: 2.2rem; font-weight: 700; line-height: 1.6; color: #333;
             margin-bottom: 30px; border: 6px solid #FFF;
         }
-
         .answers-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 500px; }
         .ans-btn {
             width: 90px; height: 90px; border-radius: 50%; border: none;
@@ -32,15 +29,17 @@
             cursor: pointer; box-shadow: 0 8px 0 #558B2F; transition: 0.1s;
         }
         .ans-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #558B2F; }
-
         .top-bar { width: 100%; display: flex; justify-content: space-around; padding: 20px; font-weight: bold; font-size: 1.4rem; color: #2E7D32; }
-        .character { font-size: 5rem; margin-bottom: 5px; }
-        
+        .character { font-size: 5rem; margin-bottom: 5px; transition: transform 0.3s; }
         .input-name { padding: 15px; font-size: 1.8rem; border-radius: 20px; border: none; text-align: center; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .btn-start { padding: 15px 50px; font-size: 1.8rem; background: #FF7043; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 0 #D84315; font-weight: bold; }
     </style>
 </head>
 <body>
+
+    <audio id="bg-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <audio id="clap-sound" src="https://actions.google.com/sounds/v1/human_voices/applause.ogg"></audio>
+    <audio id="clown-sound" src="https://www.myinstants.com/media/sounds/clown-laugh.mp3"></audio>
 
     <div id="name-screen" class="screen active">
         <h1 style="color: #2E7D32; font-size: 3rem;">אֵיךְ קוֹרְאִים לְךָ?</h1>
@@ -53,22 +52,15 @@
             <div>שָׁלוֹם, <span id="display-name"></span>!</div>
             <div>⭐ <span id="score">0</span></div>
         </div>
-        
         <div class="character" id="char-img">👦</div>
-
-        <div class="story-card" id="question-text">
-            טּוֹעֵן שְׁאֵלָה...
-        </div>
-
+        <div class="story-card" id="question-text">טּוֹעֵן שְׁאֵלָה...</div>
         <div class="answers-container" id="options"></div>
     </div>
 
     <script>
         let userName = localStorage.getItem('math_vocal_name') || "";
-        let score = 0;
-        let correctAns = 0;
+        let score = 0, correctAns = 0;
 
-        // רְשִׁימַת סִפּוּרִים מְנֻקָּדִים
         const stories = [
             { t: "לְ{name} הָיוּ {n1} תַּפּוּחִים. אִמָּא נָתְנָה לוֹ עוֹד {n2}. כַּמָּה תַּפּוּחִים יֵשׁ לוֹ עַכְשָׁו?", op: "+" },
             { t: "עַל הָעֵץ יָשְׁבוּ {n1} צִפּוֹרִים. {n2} צִפּוֹרִים עָפוּ לַשָּׁמַיִם. כַּמָּה צִפּוֹרִים נִשְׁאֲרוּ?", op: "-" },
@@ -90,6 +82,12 @@
             document.getElementById('display-name').innerText = userName;
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('game-screen').classList.add('active');
+            
+            // התחלת מוזיקת רקע
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.volume = 0.2;
+            bgMusic.play().catch(e => console.log("Music blocked until user interacts"));
+
             generateQuestion();
         }
 
@@ -97,16 +95,46 @@
             let story = stories[Math.floor(Math.random() * stories.length)];
             let n1 = Math.floor(Math.random() * 10) + 6;
             let n2 = Math.floor(Math.random() * 5) + 1;
-            
             if(story.op === "+") correctAns = n1 + n2;
-            else { 
-                if(n1 < n2) [n1, n2] = [n2, n1];
-                correctAns = n1 - n2; 
-            }
+            else { if(n1 < n2) [n1, n2] = [n2, n1]; correctAns = n1 - n2; }
 
-            let text = story.t.replace("{name}", userName).replace("{n1}", n1).replace("{n2}", n2);
-            document.getElementById('question-text').innerText = text;
+            document.getElementById('question-text').innerText = story.t.replace("{name}", userName).replace("{n1}", n1).replace("{n2}", n2);
 
             let options = [correctAns];
             while(options.length < 5) {
-                let rand = correctAns + Math.floor(Math.random() * 8) -
+                let rand = correctAns + Math.floor(Math.random() * 8) - 4;
+                if(rand >= 0 && !options.includes(rand)) options.push(rand);
+            }
+            options.sort((a, b) => a - b);
+            document.getElementById('options').innerHTML = options.map(opt => `<button class="ans-btn" onclick="check(${opt})">${opt}</button>`).join('');
+        }
+
+        function check(val) {
+            if(val === correctAns) {
+                score += 10;
+                document.getElementById('score').innerText = score;
+                
+                // אפקטים של ניצחון
+                document.getElementById('clap-sound').play();
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                
+                const char = document.getElementById('char-img');
+                char.style.transform = "translateY(-30px) scale(1.3)";
+                setTimeout(() => {
+                    char.style.transform = "translateY(0) scale(1)";
+                    generateQuestion();
+                }, 1500);
+            } else {
+                // אפקט של טעות - ליצן צוחק
+                document.getElementById('clown-sound').play();
+                document.getElementById('question-text').style.color = "red";
+                document.getElementById('char-img').style.transform = "rotate(20deg)";
+                setTimeout(() => { 
+                    document.getElementById('question-text').style.color = "#333"; 
+                    document.getElementById('char-img').style.transform = "rotate(0deg)";
+                }, 800);
+            }
+        }
+    </script>
+</body>
+</html>
