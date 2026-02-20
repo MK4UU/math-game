@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>חשבון בקליק - הכל באחד! ⚡</title>
+    <style>
+        :root {
+            --plus: #4CAF50; --minus: #FF9800; --mult: #9C27B0;
+            --bg: #F0F4C3; --text: #263238;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif; background-color: var(--bg);
+            margin: 0; display: flex; flex-direction: column; align-items: center;
+            height: 100vh; overflow: hidden; color: var(--text);
+        }
+
+        .header {
+            width: 100%; background: white; padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); box-sizing: border-box;
+        }
+
+        .stars-count { color: #FFD600; font-size: 1.5rem; font-weight: bold; text-shadow: 1px 1px 1px #000; }
+
+        /* מסך בחירה */
+        #menu-screen {
+            display: flex; flex-direction: column; justify-content: center; gap: 20px;
+            height: 100%; width: 90%;
+        }
+
+        .menu-btn {
+            padding: 25px; font-size: 1.8rem; border: none; border-radius: 20px;
+            color: white; font-weight: bold; cursor: pointer;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2); transition: 0.1s;
+        }
+
+        .btn-plus { background: var(--plus); }
+        .btn-minus { background: var(--minus); }
+        .btn-mult { background: var(--mult); }
+
+        /* מסך משחק */
+        #game-screen { display: none; flex-direction: column; align-items: center; width: 100%; flex: 1; }
+
+        .question-box {
+            font-size: 4rem; margin: 20px 0; background: white;
+            padding: 20px 50px; border-radius: 30px; box-shadow: 0 10px 0 #cfd8dc;
+        }
+
+        .answer-display { font-size: 3rem; height: 70px; color: #546E7A; font-weight: bold; }
+
+        .keypad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            width: 90%; max-width: 360px; padding-bottom: 20px;
+        }
+
+        .key {
+            padding: 15px; font-size: 1.8rem; border: none; border-radius: 15px;
+            background: white; box-shadow: 0 5px 0 #bbb; cursor: pointer;
+        }
+
+        .key:active { transform: translateY(4px); box-shadow: 0 1px 0 #bbb; }
+        .key.action { background: #FFCDD2; }
+        .key.submit { background: #81C784; color: white; box-shadow: 0 5px 0 #2E7D32; }
+
+        .back-btn { margin-top: 10px; background: none; border: 2px solid #546E7A; padding: 5px 15px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="showMenu()">🏠 תפריט</button>
+        <div class="stars-count">⭐ <span id="star-count">0</span></div>
+    </div>
+
+    <div id="menu-screen">
+        <h1 style="text-align:center">מה נלמד היום?</h1>
+        <button class="menu-btn btn-plus" onclick="startGame('plus')">➕ חיבור</button>
+        <button class="menu-btn btn-minus" onclick="startGame('minus')">➖ חיסור</button>
+        <button class="menu-btn btn-mult" onclick="startGame('mult')">✖️ כפל</button>
+    </div>
+
+    <div id="game-screen">
+        <div class="question-box" id="question">?</div>
+        <div class="answer-display" id="answer-display">?</div>
+
+        <div class="keypad">
+            <button class="key" onclick="addNum(1)">1</button>
+            <button class="key" onclick="addNum(2)">2</button>
+            <button class="key" onclick="addNum(3)">3</button>
+            <button class="key" onclick="addNum(4)">4</button>
+            <button class="key" onclick="addNum(5)">5</button>
+            <button class="key" onclick="addNum(6)">6</button>
+            <button class="key" onclick="addNum(7)">7</button>
+            <button class="key" onclick="addNum(8)">8</button>
+            <button class="key" onclick="addNum(9)">9</button>
+            <button class="key action" onclick="clearAns()">❌</button>
+            <button class="key" onclick="addNum(0)">0</button>
+            <button class="key submit" onclick="checkAnswer()">✅</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = '';
+        let n1, n2, correctAnswer;
+        let currentInput = "";
+        let stars = 0;
+
+        function showMenu() {
+            document.getElementById('menu-screen').style.display = 'flex';
+            document.getElementById('game-screen').style.display = 'none';
+        }
+
+        function startGame(mode) {
+            currentMode = mode;
+            document.getElementById('menu-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            generateQuestion();
+        }
+
+        function generateQuestion() {
+            currentInput = "";
+            document.getElementById('answer-display').innerText = "?";
+            document.getElementById('answer-display').style.color = "#546E7A";
+
+            if (currentMode === 'plus') {
+                n1 = Math.floor(Math.random() * 20) + 1;
+                n2 = Math.floor(Math.random() * 20) + 1;
+                correctAnswer = n1 + n2;
+                document.getElementById('question').innerText = `${n1} + ${n2}`;
+            } else if (currentMode === 'minus') {
+                n1 = Math.floor(Math.random() * 20) + 10;
+                n2 = Math.floor(Math.random() * 10) + 1;
+                correctAnswer = n1 - n2;
+                document.getElementById('question').innerText = `${n1} - ${n2}`;
+            } else if (currentMode === 'mult') {
+                n1 = Math.floor(Math.random() * 10) + 1;
+                n2 = Math.floor(Math.random() * 10) + 1;
+                correctAnswer = n1 * n2;
+                document.getElementById('question').innerText = `${n1} × ${n2}`;
+            }
+        }
+
+        function addNum(num) {
+            if (currentInput.length < 3) {
+                currentInput += num;
+                document.getElementById('answer-display').innerText = currentInput;
+            }
+        }
+
+        function clearAns() {
+            currentInput = "";
+            document.getElementById('answer-display').innerText = "?";
+        }
+
+        function checkAnswer() {
+            if (parseInt(currentInput) === correctAnswer) {
+                stars += 10;
+                document.getElementById('star-count').innerText = stars;
+                document.getElementById('answer-display').innerText = "אלופה! 🏆";
+                document.getElementById('answer-display').style.color = "green";
+                setTimeout(generateQuestion, 1200);
+            } else {
+                document.getElementById('answer-display').innerText = "טעות.. נסה שוב";
+                document.getElementById('answer-display').style.color = "red";
+                setTimeout(clearAns, 800);
+            }
+        }
+    </script>
+</body>
+</html>
