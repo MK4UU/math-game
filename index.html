@@ -3,136 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>חֶשְׁבּוֹן בַּטֶּבַע 🍎</title>
+    <title>מֵרוֹץ הָאַרְנָב לְ-100 🐰</title>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --accent: #4CAF50; --bg-sky: #A7E6FF; }
+        :root { --wood: #8D6E63; --leaf: #66BB6A; --sky: #E3F2FD; --path: #D7CCC8; }
         body { 
             font-family: 'Assistant', sans-serif; margin: 0; padding: 0;
-            background: linear-gradient(to bottom, var(--bg-sky) 60%, #B2FF59 60%);
+            background: linear-gradient(to bottom, var(--sky) 50%, var(--leaf) 50%);
             height: 100vh; display: flex; flex-direction: column; align-items: center; overflow: hidden;
         }
+
+        /* לוח התרגיל */
+        .board {
+            background: #FFF9C4; border: 6px solid var(--wood); padding: 15px 30px;
+            border-radius: 20px; font-size: 2.5rem; font-weight: 800; color: #5D4037;
+            margin-top: 20px; box-shadow: 0 8px 0 rgba(0,0,0,0.1); z-index: 5;
+        }
+
+        /* מסלול ההתקדמות */
+        .track-container {
+            position: absolute; bottom: 100px; width: 90%; height: 60px;
+            background: rgba(0,0,0,0.05); border-radius: 30px; display: flex; align-items: center; padding: 0 10px;
+        }
+        .finish-line { position: absolute; right: 0; font-size: 2rem; }
+        .start-line { position: absolute; left: 0; font-size: 1.2rem; font-weight: bold; color: var(--wood); }
+
+        /* הארנב */
+        #rabbit { 
+            font-size: 3.5rem; position: absolute; bottom: 110px; left: 0;
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
+        }
+
+        .answers { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px; }
+        .ans-card {
+            background: white; border: 4px solid var(--wood); width: 100px; height: 60px;
+            border-radius: 15px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 var(--wood);
+        }
+        .ans-card:active { transform: translateY(3px); box-shadow: none; }
+
+        .progress-text { position: absolute; bottom: 40px; font-weight: 800; color: white; font-size: 1.5rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
         .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; text-align: center; }
-        .active { display: flex; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .story-card {
-            background: white; width: 85%; max-width: 600px; padding: 35px;
-            border-radius: 40px; box-shadow: 0 15px 0px rgba(0,0,0,0.1);
-            font-size: 2.2rem; font-weight: 700; line-height: 1.6; color: #333;
-            margin-bottom: 30px; border: 6px solid #FFF;
-        }
-        .answers-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 500px; }
-        .ans-btn {
-            width: 90px; height: 90px; border-radius: 50%; border: none;
-            background: #7CB342; color: white; font-size: 2.2rem; font-weight: bold;
-            cursor: pointer; box-shadow: 0 8px 0 #558B2F; transition: 0.1s;
-        }
-        .ans-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #558B2F; }
-        .top-bar { width: 100%; display: flex; justify-content: space-around; padding: 20px; font-weight: bold; font-size: 1.4rem; color: #2E7D32; }
-        .character { font-size: 5rem; margin-bottom: 5px; transition: transform 0.3s; }
-        .input-name { padding: 15px; font-size: 1.8rem; border-radius: 20px; border: none; text-align: center; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .btn-start { padding: 15px 50px; font-size: 1.8rem; background: #FF7043; color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 6px 0 #D84315; font-weight: bold; }
+        .active { display: flex; }
     </style>
 </head>
 <body>
 
     <audio id="bg-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
-    <audio id="clap-sound" src="https://actions.google.com/sounds/v1/human_voices/applause.ogg"></audio>
-    <audio id="clown-sound" src="https://www.myinstants.com/media/sounds/clown-laugh.mp3"></audio>
+    <audio id="clap" src="https://www.soundjay.com/human/applause-01.mp3"></audio>
+    <audio id="fail" src="https://www.myinstants.com/media/sounds/clown-laugh.mp3"></audio>
 
     <div id="name-screen" class="screen active">
-        <h1 style="color: #2E7D32; font-size: 3rem;">אֵיךְ קוֹרְאִים לְךָ?</h1>
-        <input type="text" id="user-name" class="input-name" placeholder="הַכְנֵס שֵׁם...">
-        <button class="btn-start" onclick="saveName()">בּוֹאוּ נְשַׂחֵק! 🍎</button>
+        <h1 style="color: #388E3C; font-size: 2.5rem;">מֵרוֹץ הָאַרְנָב לְ-100! 🏁</h1>
+        <input type="text" id="user-name" placeholder="אֵיךְ קוֹרְאִים לְךָ?" style="padding:15px; font-size:1.5rem; border-radius:15px; border:3px solid var(--wood); text-align:center;">
+        <button onclick="startApp()" style="margin-top:20px; padding:15px 40px; font-size:1.5rem; background:#FF7043; color:white; border:none; border-radius:50px; cursor:pointer; font-weight:bold;">לַמֵּרוֹץ! 🥕</button>
     </div>
 
     <div id="game-screen" class="screen">
-        <div class="top-bar">
-            <div>שָׁלוֹם, <span id="display-name"></span>!</div>
-            <div>⭐ <span id="score">0</span></div>
+        <div class="board" id="q-text"> טּוֹעֵן... </div>
+        <div class="answers" id="options"></div>
+
+        <div id="rabbit">🐰</div>
+        <div class="track-container">
+            <div class="start-line">0</div>
+            <div class="finish-line">🚩 100</div>
         </div>
-        <div class="character" id="char-img">👦</div>
-        <div class="story-card" id="question-text">טּוֹעֵן שְׁאֵלָה...</div>
-        <div class="answers-container" id="options"></div>
+        
+        <div class="progress-text">הָאַרְנָב בְּמֶרְחָק: <span id="pos-display">0</span> מתוך 100</div>
     </div>
 
     <script>
-        let userName = localStorage.getItem('math_vocal_name') || "";
-        let score = 0, correctAns = 0;
+        let userName = "";
+        let rabbitPos = 0; // המיקום של הארנב (0 עד 100)
+        let correctAns = 0;
 
-        const stories = [
-            { t: "לְ{name} הָיוּ {n1} תַּפּוּחִים. אִמָּא נָתְנָה לוֹ עוֹד {n2}. כַּמָּה תַּפּוּחִים יֵשׁ לוֹ עַכְשָׁו?", op: "+" },
-            { t: "עַל הָעֵץ יָשְׁבוּ {n1} צִפּוֹרִים. {n2} צִפּוֹרִים עָפוּ לַשָּׁמַיִם. כַּמָּה צִפּוֹרִים נִשְׁאֲרוּ?", op: "-" },
-            { t: "בַּגִּינָה פָּרְחוּ {n1} פְּרָחִים. {name} קָטַף {n2} פְּרָחִים יָפִים. כַּמָּה פְּרָחִים נִשְׁאֲרוּ?", op: "-" },
-            { t: "לְ{name} הָיוּ {n1} בַּלּוֹנִים. {n2} בַּלּוֹנִים הִתְפּוֹצְצוּ. כַּמָּה בַּלּוֹנִים נִשְׁאֲרוּ?", op: "-" },
-            { t: "בַּקְּלָמָר שֶׁל {name} הָיוּ {n1} עֶפְרוֹנוֹת. הוּא קִבֵּל עוֹד {n2}. כַּמָּה עֶפְרוֹנוֹת יֵשׁ לוֹ?", op: "+" }
-        ];
-
-        window.onload = () => { if(userName) startGame(); };
-
-        function saveName() {
+        function startApp() {
             userName = document.getElementById('user-name').value;
-            if(userName.length < 2) return;
-            localStorage.setItem('math_vocal_name', userName);
-            startGame();
-        }
-
-        function startGame() {
-            document.getElementById('display-name').innerText = userName;
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            if(!userName) return;
+            document.getElementById('name-screen').classList.remove('active');
             document.getElementById('game-screen').classList.add('active');
-            
-            // התחלת מוזיקת רקע
-            const bgMusic = document.getElementById('bg-music');
-            bgMusic.volume = 0.2;
-            bgMusic.play().catch(e => console.log("Music blocked until user interacts"));
-
-            generateQuestion();
+            document.getElementById('bg-music').volume = 0.1;
+            document.getElementById('bg-music').play().catch(() => {});
+            newRound();
         }
 
-        function generateQuestion() {
-            let story = stories[Math.floor(Math.random() * stories.length)];
-            let n1 = Math.floor(Math.random() * 10) + 6;
-            let n2 = Math.floor(Math.random() * 5) + 1;
-            if(story.op === "+") correctAns = n1 + n2;
-            else { if(n1 < n2) [n1, n2] = [n2, n1]; correctAns = n1 - n2; }
+        function newRound() {
+            // קביעת רמת קושי לפי המיקום (כל 20 צעדים הקושי עולה)
+            let difficulty = Math.floor(rabbitPos / 20) + 1; 
+            let range = 5 + (difficulty * 5); // מתחיל ב-10 וגדל עד 30+
+            
+            let isPlus = Math.random() > 0.5;
+            let a = Math.floor(Math.random() * range) + 2;
+            let b = Math.floor(Math.random() * range) + 2;
 
-            document.getElementById('question-text').innerText = story.t.replace("{name}", userName).replace("{n1}", n1).replace("{n2}", n2);
-
-            let options = [correctAns];
-            while(options.length < 5) {
-                let rand = correctAns + Math.floor(Math.random() * 8) - 4;
-                if(rand >= 0 && !options.includes(rand)) options.push(rand);
+            if (isPlus) {
+                correctAns = a + b;
+                document.getElementById('q-text').innerText = `${a} + ${b} = ?`;
+            } else {
+                if (a < b) [a, b] = [b, a];
+                correctAns = a - b;
+                document.getElementById('q-text').innerText = `${a} - ${b} = ?`;
             }
-            options.sort((a, b) => a - b);
-            document.getElementById('options').innerHTML = options.map(opt => `<button class="ans-btn" onclick="check(${opt})">${opt}</button>`).join('');
+
+            let opts = [correctAns];
+            while(opts.length < 4) {
+                let r = Math.floor(Math.random() * (range * 2)) + 1;
+                if(!opts.includes(r)) opts.push(r);
+            }
+            opts.sort((x, y) => x - y);
+            document.getElementById('options').innerHTML = opts.map(o => `<div class="ans-card" onclick="check(${o})">${o}</div>`).join('');
+        }
+
+        function updateRabbitUI() {
+            const rabbit = document.getElementById('rabbit');
+            const posDisplay = document.getElementById('pos-display');
+            
+            // חישוב אחוז ההתקדמות על המסך
+            let percentage = Math.min(rabbitPos, 100);
+            rabbit.style.left = `calc(${percentage}% - 50px)`;
+            posDisplay.innerText = rabbitPos;
+
+            if (rabbitPos >= 100) {
+                confetti({ particleCount: 200, spread: 100 });
+                document.getElementById('q-text').innerText = "כָּל הַכָּבוֹד! נִצַּחְתָּ!";
+                document.getElementById('options').innerHTML = `<button onclick="location.reload()" style="padding:10px 20px; border-radius:20px; background:var(--leaf); color:white; border:none; font-weight:bold;">מִשְׂחָק חָדָשׁ</button>`;
+            }
         }
 
         function check(val) {
-            if(val === correctAns) {
-                score += 10;
-                document.getElementById('score').innerText = score;
-                
-                // אפקטים של ניצחון
-                document.getElementById('clap-sound').play();
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                
-                const char = document.getElementById('char-img');
-                char.style.transform = "translateY(-30px) scale(1.3)";
-                setTimeout(() => {
-                    char.style.transform = "translateY(0) scale(1)";
-                    generateQuestion();
-                }, 1500);
+            if (val === correctAns) {
+                rabbitPos += 5; // מתקדם 5 צעדים בכל תשובה נכונה
+                document.getElementById('clap').play();
+                confetti({ particleCount: 50, spread: 30, origin: { y: 0.8 } });
+                updateRabbitUI();
+                if (rabbitPos < 100) setTimeout(newRound, 1200);
             } else {
-                // אפקט של טעות - ליצן צוחק
-                document.getElementById('clown-sound').play();
-                document.getElementById('question-text').style.color = "red";
-                document.getElementById('char-img').style.transform = "rotate(20deg)";
-                setTimeout(() => { 
-                    document.getElementById('question-text').style.color = "#333"; 
-                    document.getElementById('char-img').style.transform = "rotate(0deg)";
-                }, 800);
+                rabbitPos = Math.max(0, rabbitPos - 3); // טעות מחזירה 3 צעדים אחורה
+                document.getElementById('fail').play();
+                document.getElementById('q-text').style.color = "red";
+                updateRabbitUI();
+                setTimeout(() => {
+                    document.getElementById('q-text').style.color = "#5D4037";
+                    newRound();
+                }, 1000);
             }
         }
     </script>
